@@ -3,14 +3,17 @@ import asyncio
 import time
 import signal
 import sys
+import threading
 from datetime import datetime
 from colorama import init, Fore, Style
 
 from .gps_manager import GPSManager
 from .logger import Logger
 from .feedback import FeedbackSystem
+from .audio import AudioSystem
 from .scanner_ble import BLEScanner
 from .scanner_wifi import WiFiScanner
+from .web_server import start_server, update_detection, update_gps_status
 
 # Initialize colorama
 init(autoreset=True)
@@ -24,6 +27,7 @@ class FlockDriveApp:
         self.gps = GPSManager(port=args.gps_port)
         self.logger = Logger(log_dir=args.log_dir)
         self.feedback = FeedbackSystem(buzzer_pin=args.buzzer_pin, led_pin=args.led_pin)
+        self.audio = AudioSystem()
 
         # Scanners
         self.ble_scanner = BLEScanner(callback=self.handle_detection)
@@ -47,8 +51,12 @@ class FlockDriveApp:
         # Log it
         self.logger.log_detection(detection)
 
-        # Feedback
+        # Alerts (GPIO + Audio)
         self.feedback.detection_alert(detection['threat_score'])
+        self.audio.detection_alert(detection['threat_score'])
+
+        # Update Web UI
+        update_detection(detection)
 
         # Update State
         self.detection_count += 1
@@ -74,8 +82,13 @@ class FlockDriveApp:
         print(Fore.CYAN + "   Flock Drive - Surveillance Scanner   ")
         print(Fore.CYAN + "========================================")
 
+        # Start Web Server (in separate thread)
+        web_thread = threading.Thread(target=start_server, kwargs={'port': self.args.web_port}, daemon=True)
+        web_thread.start()
+
         # Start Subsystems
         self.feedback.boot_sequence()
+        self.audio.boot_sequence()
         self.gps.start()
 
         # Start Scanners
@@ -86,6 +99,7 @@ class FlockDriveApp:
             self.wifi_scanner.start()
 
         print(Fore.GREEN + "System Active. Hunting for signals...")
+        print(Fore.GREEN + f"Dashboard available at http://localhost:{self.args.web_port}")
         print(Fore.GREEN + "Press Ctrl+C to stop.")
 
         try:
@@ -93,7 +107,15 @@ class FlockDriveApp:
                 # Heartbeat every 10s
                 if time.time() - self.start_time > 10:
                     self.feedback.heartbeat()
+                    self.audio.heartbeat() # Play heartbeat sound
                     self.start_time = time.time()
+
+                    # Update GPS Status on Dashboard
+                    loc = self.gps.get_location()
+                    if loc:
+                        update_gps_status("FIX", loc['latitude'], loc['longitude'])
+                    else:
+                        update_gps_status("SEARCHING", 0, 0)
 
                     # Print Status Line
                     gps_status = "Fix" if self.gps.current_fix else "No Fix"
@@ -113,6 +135,7 @@ class FlockDriveApp:
         self.wifi_scanner.stop()
         self.gps.stop()
         self.feedback.cleanup()
+        self.logger.close()
         print(Fore.GREEN + "Goodbye.")
 
 def main():
@@ -123,6 +146,7 @@ def main():
     parser.add_argument('--led-pin', type=int, default=23, help='GPIO pin for LED (default: 23)')
     parser.add_argument('--gps-port', type=str, help='Serial port for GPS (auto-detect if empty)')
     parser.add_argument('--wifi-interface', type=str, default='wlan1', help='WiFi interface in monitor mode (default: wlan1)')
+    parser.add_argument('--web-port', type=int, default=5000, help='Port for Web Dashboard')
 
     # Feature flags
     parser.add_argument('--no-ble', action='store_true', help='Disable BLE scanning')

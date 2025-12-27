@@ -4,3 +4,8 @@ pynmea2==1.19.0
 colorama==0.4.6
 gpiozero==2.0
 numpy==1.26.4
+flask==3.0.0
+flask-socketio==5.3.6
+pygame==2.5.2
+gevent==23.9.1
+gevent-websocket==0.10.1

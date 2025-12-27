@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLOCK DRIVE // SURVEILLANCE SCANNER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cyber.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="logo">
+                <h1>FLOCK DRIVE <span class="blink">_</span></h1>
+                <div class="subtitle">PASSIVE SURVEILLANCE INTERCEPTOR</div>
+            </div>
+            <div class="status-panel">
+                <div class="stat-box">
+                    <span class="label">GPS</span>
+                    <span class="value" id="gps-status">NO FIX</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">TARGETS</span>
+                    <span class="value" id="detection-count">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">UPTIME</span>
+                    <span class="value" id="uptime">00:00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main>
+            <!-- LEFT COLUMN: RADAR & INFO -->
+            <div class="col-left">
+                <div class="panel radar-panel">
+                    <h3><span class="icon">⌖</span> PROXIMITY RADAR</h3>
+                    <div class="radar-container">
+                        <div class="radar-sweep"></div>
+                        <div class="radar-grid"></div>
+                        <div id="radar-blips"></div>
+                    </div>
+                </div>
+
+                <div class="panel threat-panel">
+                    <h3><span class="icon">⚠</span> THREAT LEVEL</h3>
+                    <div class="threat-meter">
+                        <div class="bar-container">
+                            <div class="bar" id="threat-bar"></div>
+                        </div>
+                        <div class="threat-text" id="threat-text">LOW</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: FEED -->
+            <div class="col-right">
+                <div class="panel feed-panel">
+                    <h3><span class="icon">≡</span> INTERCEPTION LOG</h3>
+                    <div class="feed-header">
+                        <span>TIME</span>
+                        <span>TYPE</span>
+                        <span>ID/MAC</span>
+                        <span>RSSI</span>
+                    </div>
+                    <div id="feed-list" class="feed-list">
+                        <!-- Detections go here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="ticker-wrap">
+                <div class="ticker">
+                    SYSTEM READY // LISTENING ON 2.4GHZ // BLE SCANNING ACTIVE // WAITING FOR TARGETS...
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
