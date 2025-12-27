@@ -1,0 +1,2 @@
+Timestamp,Protocol,Type,MAC,Name/SSID,RSSI,Threat_Score,Latitude,Longitude,Altitude,Description
+2025-12-27T16:24:49.928017,Test,Test,AA:BB:CC:11:22:33,Test Device,-50,90,,,,Test Detection

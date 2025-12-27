@@ -1,0 +1,6 @@
+bleak==0.21.1
+scapy==2.5.0
+pynmea2==1.19.0
+colorama==0.4.6
+gpiozero==2.0
+numpy==1.26.4
