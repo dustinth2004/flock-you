@@ -3,6 +3,7 @@ scapy==2.5.0
 pynmea2==1.19.0
 colorama==0.4.6
 gpiozero==2.0
+RPi.GPIO==0.7.1
 numpy==1.26.4
 flask==3.0.0
 flask-socketio==5.3.6

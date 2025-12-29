@@ -4,6 +4,8 @@ import time
 import signal
 import sys
 import threading
+import os
+import socket
 from datetime import datetime
 from colorama import init, Fore, Style
 
@@ -22,12 +24,13 @@ class FlockDriveApp:
     def __init__(self, args):
         self.args = args
         self.running = True
+        self.home_base_mode = False
 
         # Components
         self.gps = GPSManager(port=args.gps_port)
         self.logger = Logger(log_dir=args.log_dir)
         self.feedback = FeedbackSystem(buzzer_pin=args.buzzer_pin, led_pin=args.led_pin)
-        self.audio = AudioSystem()
+        self.audio = AudioSystem(use_buzzer=True, buzzer_pin=args.buzzer_pin)
 
         # Scanners
         self.ble_scanner = BLEScanner(callback=self.handle_detection)
@@ -37,6 +40,55 @@ class FlockDriveApp:
         self.last_detection_time = 0
         self.start_time = time.time()
         self.detection_count = 0
+
+        # Check for Home Base Mode (Environment Variable set by systemd)
+        if os.environ.get('FLOCK_HOME_BASE') == '1':
+            self.check_home_base_connection()
+
+    def check_home_base_connection(self):
+        """Checks if we are connected to a Home WiFi network (Home Base Mode)."""
+        try:
+            # Check if we have an IP address that IS NOT the Hotspot IP (10.0.0.1)
+            # This is a heuristic. A better way relies on the 'autohotspot' script status,
+            # but checking IP is robust enough.
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0)
+            try:
+                # connect to a public DNS to find our IP
+                s.connect(('8.8.8.8', 1))
+                ip = s.getsockname()[0]
+            except Exception:
+                ip = '127.0.0.1'
+            finally:
+                s.close()
+
+            print(f"[System] Current IP: {ip}")
+
+            # If we are NOT 10.0.0.1 (Hotspot default) and not localhost, we are likely on Home WiFi
+            if ip != '10.0.0.1' and not ip.startswith('127.'):
+                print(f"{Fore.CYAN}[System] Home Base Detected! (Connected to WiFi)")
+                self.home_base_mode = True
+
+                # Trigger Home Base Sequence
+                threading.Thread(target=self.home_base_sequence, daemon=True).start()
+            else:
+                print(f"[System] Mobile Mode (Hotspot Active or No Connection)")
+                self.home_base_mode = False
+
+        except Exception as e:
+            print(f"[System] Network check failed: {e}")
+
+    def home_base_sequence(self):
+        """Plays the fancy bong and prepares for upload."""
+        time.sleep(5) # Wait for audio system to fully init
+        print(f"{Fore.MAGENTA}*** HOME BASE SEQUENCE INITIATED ***")
+        self.audio.home_base_connected()
+
+        # In a real upload scenario, we would trigger the upload here.
+        # For now, we ensure the logs are flushed (Logger handles this)
+        # and print a message.
+        print(f"{Fore.MAGENTA}>>> KML/CSV Files Ready for Export")
+        print(f"{Fore.MAGENTA}>>> Access Dashboard to Download")
 
     def handle_detection(self, detection):
         # Add timestamp and GPS
@@ -106,8 +158,11 @@ class FlockDriveApp:
             while self.running:
                 # Heartbeat every 10s
                 if time.time() - self.start_time > 10:
-                    self.feedback.heartbeat()
-                    self.audio.heartbeat() # Play heartbeat sound
+                    # Only play heartbeat if NOT in Home Base mode (Silence at home)
+                    if not self.home_base_mode:
+                        self.feedback.heartbeat()
+                        self.audio.heartbeat()
+
                     self.start_time = time.time()
 
                     # Update GPS Status on Dashboard
@@ -119,7 +174,8 @@ class FlockDriveApp:
 
                     # Print Status Line
                     gps_status = "Fix" if self.gps.current_fix else "No Fix"
-                    sys.stdout.write(f"\rStatus: Running | Detections: {self.detection_count} | GPS: {gps_status}   ")
+                    mode_str = "HOME BASE" if self.home_base_mode else "MOBILE"
+                    sys.stdout.write(f"\rStatus: {mode_str} | Detections: {self.detection_count} | GPS: {gps_status}   ")
                     sys.stdout.flush()
 
                 await asyncio.sleep(0.1)
