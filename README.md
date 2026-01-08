@@ -12,7 +12,7 @@
 | **Platform** | **Best For** | **Difficulty** | **Guide** |
 | :--- | :--- | :--- | :--- |
 | **Raspberry Pi** | **Dedicated Device**. Always-on scanning in your car (Headless). | Medium | [**Setup Guide (Pi)**](HELP_SETUP_PI.md) |
-| **Laptop / PC** | **Occasional Scanning**. Use your Linux laptop for wardriving. | Easy | [**Setup Guide (PC)**](HELP_SETUP_PC.md) |
+| **Laptop / Surface** | **On-the-Go Scanning**. PostmarketOS / Linux Laptops. | Easy | [**Setup Guide (PC)**](HELP_SETUP_PC.md) |
 | **ESP32 (Hardware)** | **Pocket Carry**. Ultra-portable standalone device (Oui-Spy). | Hard (Soldering) | [**Setup Guide (ESP32)**](HELP_SETUP_ESP32.md) |
 
 ---
@@ -22,10 +22,14 @@
 - **Multi-Method Detection**:
   - **WiFi**: Sniffs Probe Requests & Beacons (Monitor Mode).
   - **BLE**: Scans for specific Service UUIDs (Raven/ShotSpotter) and device names.
-- **Audio Feedback**: Tactical audio alerts (GPIO Buzzer or System Audio).
-- **Cyberpunk Dashboard**: Real-time web interface for visualizing threats.
+- **Audio Feedback**:
+    - **System Audio**: Pygame-based alerts (HDMI/Jack).
+    - **Browser Audio**: Beeps directly from the dashboard (great for laptops).
+- **Tactical Dashboard**:
+    - **Radar Mode**: Abstract proximity visualization.
+    - **Map Mode**: Offline-ready street map with GPS tracking (Leaflet).
+    - **Visual Alerts**: Full-screen "Red Flash" on critical detections.
 - **GPS Logging**: Maps detections to KML/CSV files.
-- **Stealth**: Passive scanning options.
 
 ## Installation (Software)
 
@@ -45,6 +49,20 @@ For Raspberry Pi or Linux PC users, we have a unified **Easy Installer**:
 3. **Follow the Wizard**:
    - Select **Dedicated Device** for Raspberry Pi (Service Mode).
    - Select **Personal Computer** for Laptop (Manual Mode).
+
+## Laptop / Surface RT Usage
+
+For devices like the Microsoft Surface RT running PostmarketOS, we provide a dedicated launch script that requires no system services.
+
+1. **Connect Peripherals**: Plug in your USB GPS and ensure your WiFi card supports Monitor Mode.
+2. **Launch**:
+   ```bash
+   sudo ./start_laptop.sh
+   ```
+3. **Open Dashboard**: Go to `http://localhost:5000` in your browser.
+   - **Click the page** once to enable Audio Alerts.
+   - Toggle **MAP** view to see your location (GPS fix required).
+   - The screen will **FLASH RED** when a high-threat device is detected.
 
 ## Documentation
 
