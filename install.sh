@@ -41,12 +41,34 @@ if [[ "$INSTALL_TYPE" != "1" && "$INSTALL_TYPE" != "2" ]]; then
 fi
 
 echo -e "${GREEN}[+] Installing System Dependencies...${NC}"
-apt-get update
-# Core dependencies
-apt-get install -y python3-pip python3-venv libglib2.0-dev git libsdl2-dev build-essential python3-dev
 
-# GPS and WiFi tools
-apt-get install -y gpsd gpsd-clients aircrack-ng wireless-tools
+if command -v apk &> /dev/null; then
+    # Alpine Linux / PostmarketOS
+    echo -e "${GREEN}[+] Detected Alpine/PostmarketOS (apk)${NC}"
+    apk update
+
+    # Core build tools and python
+    apk add python3 py3-pip py3-virtualenv git build-base python3-dev
+
+    # Dependencies for libraries
+    apk add glib-dev sdl2-dev linux-headers
+
+    # Tools
+    apk add gpsd aircrack-ng wireless-tools
+
+elif command -v apt-get &> /dev/null; then
+    # Debian / Ubuntu / Raspbian
+    echo -e "${GREEN}[+] Detected Debian/Ubuntu (apt)${NC}"
+    apt-get update
+
+    # Core dependencies
+    apt-get install -y python3-pip python3-venv libglib2.0-dev git libsdl2-dev build-essential python3-dev
+
+    # GPS and WiFi tools
+    apt-get install -y gpsd gpsd-clients aircrack-ng wireless-tools
+else
+    echo -e "${YELLOW}[!] Warning: Unknown package manager. Skipping system packages.${NC}"
+fi
 
 # Install Directory
 INSTALL_DIR="/opt/flock_drive"
@@ -77,6 +99,10 @@ source venv/bin/activate
 # Install Python Requirements
 echo -e "${GREEN}[+] Installing Python Dependencies...${NC}"
 pip install --upgrade pip
+
+# Force uninstall numpy if it exists (fix for previous broken installs)
+pip uninstall -y numpy 2>/dev/null || true
+
 pip install -r flock_drive/requirements.txt
 
 # --- Branching Logic ---
