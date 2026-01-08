@@ -43,7 +43,7 @@ fi
 echo -e "${GREEN}[+] Installing System Dependencies...${NC}"
 apt-get update
 # Core dependencies
-apt-get install -y python3-pip python3-venv libglib2.0-dev git libsdl2-dev
+apt-get install -y python3-pip python3-venv libglib2.0-dev git libsdl2-dev build-essential python3-dev
 
 # GPS and WiFi tools
 apt-get install -y gpsd gpsd-clients aircrack-ng wireless-tools
